@@ -127,16 +127,7 @@ The system provides:
 4. **Evaluation**: Accuracy metrics and validation
 5. **Integration**: Loaded into main detection pipeline
 
-## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
@@ -144,11 +135,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Hugging Face**: For the transformers library
 - **OpenCV**: For computer vision capabilities
 - **PyTorch**: For deep learning framework
-
-## 📞 Contact
-
-- **GitHub**: [Mhemd139](https://github.com/Mhemd139)
-- **Repository**: [MMA_Ai](https://github.com/Mhemd139/MMA_Ai)
 
 ---
 
