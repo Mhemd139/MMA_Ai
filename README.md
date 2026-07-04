@@ -2,6 +2,8 @@
 
 A computer vision pipeline that analyzes MMA fight footage to detect punches and classify each one as **landed** or **blocked**. It combines a YOLO object detector (served via the Roboflow Inference API) with a fine-tuned ResNet-50 image classifier, and produces an annotated video with running punch statistics.
 
+![Demo: annotated fight footage with punch detection and landed/blocked counters](gif/MMA_AI.gif)
+
 ## How It Works
 
 The pipeline processes a fight video frame by frame:
