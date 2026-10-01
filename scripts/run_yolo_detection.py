@@ -48,7 +48,7 @@ COLORS = {
 
 # === Hugging Face Model Setup ===
 def setup_huggingface_model():
-    """Setup the Hugging Face model for fine-tuning"""
+    """Load the fine-tuned punch classifier, or return (None, None) if it has not been trained"""
     model_path = "models/punch-detection-model"
     if os.path.exists(model_path):
         print("📁 Loading pre-trained Hugging Face model...")
@@ -56,18 +56,19 @@ def setup_huggingface_model():
         processor = AutoImageProcessor.from_pretrained(model_path)
         return model, processor
     else:
-        print("⚠️ Hugging Face model not found. Using YOLO only.")
+        print("⚠️ Hugging Face model not found. Falling back to the guard heuristic.")
         return None, None
 
 # === Face Detection ===
+FACE_CASCADE = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
 def detect_face_in_person(image, person_box):
     x1, y1, x2, y2 = person_box
     person_region = image[y1:y2, x1:x2]
     if person_region.size == 0:
         return None
     gray = cv2.cvtColor(person_region, cv2.COLOR_BGR2GRAY)
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    faces = FACE_CASCADE.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
     if len(faces) > 0:
         fx, fy, fw, fh = max(faces, key=lambda x: x[2] * x[3])
         return (x1 + fx, y1 + fy, x1 + fx + fw, y1 + fy + fh)
@@ -86,6 +87,13 @@ def boxes_intersect(boxA, boxB):
     inter_x2 = min(ax2, bx2)
     inter_y2 = min(ay2, by2)
     return inter_x2 > inter_x1 and inter_y2 > inter_y1
+
+def classify_by_guard(punch_box, guards):
+    """Fallback without the classifier: a punch through a high guard is blocked, otherwise landed"""
+    for guard_box, guard_type in guards:
+        if "high" in guard_type and boxes_intersect(punch_box, guard_box):
+            return "blocked"
+    return "landed"
 
 class PunchTracker:
     def __init__(self, max_inactive_frames=4):
@@ -108,7 +116,7 @@ class PunchTracker:
 
 # === Counter Drawing Function ===
 def draw_counter(image, punches_blocked, punches_landed):
-    """Draw punch counters on the image with Hugging Face branding"""
+    """Draw punch counters on the image"""
     # Create a semi-transparent overlay for counters
     overlay = image.copy()
     
@@ -132,10 +140,7 @@ def draw_counter(image, punches_blocked, punches_landed):
     # Punches Landed counter (Green)
     landed_text = f"Punches Landed: {punches_landed}"
     cv2.putText(image, landed_text, (20, 125), font, font_scale, (0, 255, 0), thickness, cv2.LINE_AA)
-    
-    # Add Hugging Face branding
-    cv2.putText(image, "Powered by Hugging Face", (20, 180), font, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
-    
+
     return image
 
 # === Main Detection Loop ===
@@ -158,9 +163,7 @@ def run_detection_with_huggingface():
         model.to(device)
         model.eval()
         print(f"✅ Hugging Face model loaded on {device}")
-    else:
-        print("⚠️ Running with YOLO detection only")
-    
+
     # Main loop
     for frame_file in sorted(os.listdir(FRAME_DIR)):
         if not frame_file.lower().endswith(".jpg"):
@@ -208,6 +211,8 @@ def run_detection_with_huggingface():
                                 punch_status = "landed"
                             
                             print(f"🥊 Frame {frame_file}: {punch_status} (confidence: {confidence:.2f})")
+                    else:
+                        punch_status = classify_by_guard(punch_box, guards)
 
         counted = tracker.update(punch_status)
         if counted == "landed":
@@ -234,7 +239,6 @@ def run_detection_with_huggingface():
                 cv2.putText(image, "FACE", (fx1, max(fy1 - 10, 20)),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2, cv2.LINE_AA)
 
-        # Draw counter with Hugging Face branding
         image = draw_counter(image, blocked_count, landed_count)
 
         # Save frame
@@ -252,11 +256,11 @@ def run_detection_with_huggingface():
         out.write(f)
     out.release()
 
-    print("✅ Done: Hugging Face enhanced video + metadata + punch analysis saved!")
+    print("✅ Done: annotated video + metadata + punch analysis saved!")
     print(f"📊 Final Statistics:")
     print(f"   🛡️ Punches Blocked: {blocked_count}")
     print(f"   💥 Punches Landed: {landed_count}")
-    print(f"   🤖 Model: Hugging Face Fine-tuned")
+    print(f"   🤖 Classifier: {'fine-tuned ResNet-50' if model is not None else 'guard heuristic'}")
 
 if __name__ == "__main__":
     run_detection_with_huggingface()

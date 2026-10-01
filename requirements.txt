@@ -7,5 +7,6 @@ pillow>=11.3.0
 matplotlib>=3.10.0
 seaborn>=0.13.2
 python-dotenv>=1.0.0
+inference-sdk>=1.7.2
 numpy>=2.0.2
 requests>=2.32.3 
