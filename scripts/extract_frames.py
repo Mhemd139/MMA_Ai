@@ -1,5 +1,6 @@
 import cv2
 import os
+import sys
 
 def extract_fixed_frame_count(video_path, output_dir, target_frames=300):
     os.makedirs(output_dir, exist_ok=True)
@@ -41,8 +42,7 @@ def extract_fixed_frame_count(video_path, output_dir, target_frames=300):
     cap.release()
     print(f"✅ Extracted {saved_count} frames to '{output_dir}'")
 
-# Example usage
 if __name__ == "__main__":
-    video_file = "C:\\Users\\VagaBond\\Downloads\\UFC Fights Dataset\\Recording 2025-08-01 211320.mp4"
-    output_folder = "data/frames"
-    extract_fixed_frame_count(video_file, output_folder, target_frames=500)
+    if len(sys.argv) != 2:
+        sys.exit("Usage: python scripts/extract_frames.py <video.mp4>")
+    extract_fixed_frame_count(sys.argv[1], "data/frames", target_frames=500)

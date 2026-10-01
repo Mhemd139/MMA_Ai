@@ -22,7 +22,6 @@ MMA_Ai/
 ├── scripts/
 │   ├── extract_frames.py              # Sample evenly spaced frames from a video
 │   ├── run_yolo_detection.py          # Main pipeline: YOLO + ResNet-50 classification
-│   ├── yolo_detection.py              # YOLO-only detection and annotation
 │   ├── process_existing_detections.py # Re-analyze saved detections without API calls
 │   └── load_huggingface_model.py      # PunchClassifier wrapper and model test
 ├── UFC_huggingface_training.ipynb     # Colab notebook for fine-tuning ResNet-50
@@ -34,14 +33,13 @@ The `data/`, `models/`, and `outputs/` directories are created at runtime and ar
 
 ## Installation
 
-Requires Python 3.9+.
+Requires Python 3.10–3.13.
 
 ```bash
 git clone https://github.com/Mhemd139/MMA_Ai.git
 cd MMA_Ai
 
 pip install -r requirements.txt
-pip install inference-sdk   # Roboflow client used by the detection scripts
 ```
 
 Create a `.env` file in the project root with your Roboflow API key:
@@ -54,10 +52,8 @@ ROBOFLOW_API_KEY=your_api_key_here
 
 ### 1. Extract frames
 
-Edit the video path at the bottom of `scripts/extract_frames.py`, then run:
-
 ```bash
-python scripts/extract_frames.py
+python scripts/extract_frames.py path/to/fight.mp4
 ```
 
 Frames are written to `data/frames/`.
@@ -68,7 +64,7 @@ Frames are written to `data/frames/`.
 python scripts/run_yolo_detection.py
 ```
 
-For each frame this calls the Roboflow API for object detection and, if a fine-tuned classifier is present at `models/punch-detection-model`, classifies punch-to-face contacts as landed or blocked. Without the classifier it falls back to YOLO detection only.
+For each frame this calls the Roboflow API for object detection and, if a fine-tuned classifier is present at `models/punch-detection-model`, classifies punch-to-face contacts as landed or blocked. Without the classifier, a guard heuristic decides: a punch that overlaps a high guard counts as blocked, otherwise landed.
 
 Outputs:
 
